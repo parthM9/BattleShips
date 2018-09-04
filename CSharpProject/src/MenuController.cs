@@ -1,276 +1,360 @@
-Imports SwinGameSDK
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Security;
+using System.Text;
+using System.Threading.Tasks;
+using Microsoft.VisualBasic;
+using SwinGameSDK;
 
-''' <summary>
-''' The menu controller handles the drawing and user interactions
-''' from the menus in the game. These include the main menu, game
-''' menu and the settings m,enu.
-''' </summary>
+/// <summary>
 
-Module MenuController
+/// The menu controller handles the drawing and user interactions
 
-    ''' <summary>
-    ''' The menu structure for the game.
-    ''' </summary>
-    ''' <remarks>
-    ''' These are the text captions for the menu items.
-    ''' </remarks>
-    Private ReadOnly _menuStructure As String()() = { _
-                New String() {"PLAY", "SETUP", "SCORES", "QUIT"}, _
-                New String() {"RETURN", "SURRENDER", "QUIT"}, _
-                New String() {"EASY", "MEDIUM", "HARD"}}
+/// from the menus in the game. These include the main menu, game
 
-    Private Const MENU_TOP As Integer = 575
-    Private Const MENU_LEFT As Integer = 30
-    Private Const MENU_GAP As Integer = 0
-    Private Const BUTTON_WIDTH As Integer = 75
-    Private Const BUTTON_HEIGHT As Integer = 15
-    Private Const BUTTON_SEP As Integer = BUTTON_WIDTH + MENU_GAP
-    Private Const TEXT_OFFSET As Integer = 0
+/// menu and the settings m,enu.
 
-    Private Const MAIN_MENU As Integer = 0
-    Private Const GAME_MENU As Integer = 1
-    Private Const SETUP_MENU As Integer = 2
+/// </summary>
 
-    Private Const MAIN_MENU_PLAY_BUTTON As Integer = 0
-    Private Const MAIN_MENU_SETUP_BUTTON As Integer = 1
-    Private Const MAIN_MENU_TOP_SCORES_BUTTON As Integer = 2
-    Private Const MAIN_MENU_QUIT_BUTTON As Integer = 3
+static class MenuController
+{
 
-    Private Const SETUP_MENU_EASY_BUTTON As Integer = 0
-    Private Const SETUP_MENU_MEDIUM_BUTTON As Integer = 1
-    Private Const SETUP_MENU_HARD_BUTTON As Integer = 2
-    Private Const SETUP_MENU_EXIT_BUTTON As Integer = 3
+    /// <summary>
+    /// The menu structure for the game.
+    /// </summary>
+    /// <remarks>
+    /// These are the text captions for the menu items.
+    /// </remarks>
+    private readonly static string[][] _menuStructure = new[] { new string[] { "PLAY", "SETUP", "SCORES", "QUIT" }, new string[] { "RETURN", "SURRENDER", "QUIT" }, new string[] { "EASY", "MEDIUM", "HARD" } };
 
-    Private Const GAME_MENU_RETURN_BUTTON As Integer = 0
-    Private Const GAME_MENU_SURRENDER_BUTTON As Integer = 1
-    Private Const GAME_MENU_QUIT_BUTTON As Integer = 2
+    private const int MENU_TOP = 575;
+    private const int MENU_LEFT = 30;
+    private const int MENU_GAP = 0;
+    private const int BUTTON_WIDTH = 75;
+    private const int BUTTON_HEIGHT = 15;
+    private const int BUTTON_SEP = BUTTON_WIDTH + MENU_GAP;
+    private const int TEXT_OFFSET = 0;
 
-    Private ReadOnly MENU_COLOR As Color = SwinGame.RGBAColor(2, 167, 252, 255)
-    Private ReadOnly HIGHLIGHT_COLOR As Color = SwinGame.RGBAColor(1, 57, 86, 255)
+    private const int MAIN_MENU = 0;
+    private const int GAME_MENU = 1;
+    private const int SETUP_MENU = 2;
 
-    ''' <summary>
-    ''' Handles the processing of user input when the main menu is showing
-    ''' </summary>
-    Public Sub HandleMainMenuInput()
-        HandleMenuInput(MAIN_MENU, 0, 0)
-    End Sub
+    private const int MAIN_MENU_PLAY_BUTTON = 0;
+    private const int MAIN_MENU_SETUP_BUTTON = 1;
+    private const int MAIN_MENU_TOP_SCORES_BUTTON = 2;
+    private const int MAIN_MENU_QUIT_BUTTON = 3;
 
-    ''' <summary>
-    ''' Handles the processing of user input when the main menu is showing
-    ''' </summary>
-    Public Sub HandleSetupMenuInput()
-        Dim handled As Boolean
-        handled = HandleMenuInput(SETUP_MENU, 1, 1)
+    private const int SETUP_MENU_EASY_BUTTON = 0;
+    private const int SETUP_MENU_MEDIUM_BUTTON = 1;
+    private const int SETUP_MENU_HARD_BUTTON = 2;
+    private const int SETUP_MENU_EXIT_BUTTON = 3;
 
-        If Not handled Then
-            HandleMenuInput(MAIN_MENU, 0, 0)
-        End If
-    End Sub
+    private const int GAME_MENU_RETURN_BUTTON = 0;
+    private const int GAME_MENU_SURRENDER_BUTTON = 1;
+    private const int GAME_MENU_QUIT_BUTTON = 2;
 
-    ''' <summary>
-    ''' Handle input in the game menu.
-    ''' </summary>
-    ''' <remarks>
-    ''' Player can return to the game, surrender, or quit entirely
-    ''' </remarks>
-    Public Sub HandleGameMenuInput()
-        HandleMenuInput(GAME_MENU, 0, 0)
-    End Sub
+    private readonly static Color MENU_COLOR = SwinGame.RGBAColor(2, 167, 252, 255);
+    private readonly static Color HIGHLIGHT_COLOR = SwinGame.RGBAColor(1, 57, 86, 255);
 
-    ''' <summary>
-    ''' Handles input for the specified menu.
-    ''' </summary>
-    ''' <param name="menu">the identifier of the menu being processed</param>
-    ''' <param name="level">the vertical level of the menu</param>
-    ''' <param name="xOffset">the xoffset of the menu</param>
-    ''' <returns>false if a clicked missed the buttons. This can be used to check prior menus.</returns>
-    Private Function HandleMenuInput(ByVal menu As Integer, ByVal level As Integer, ByVal xOffset As Integer) As Boolean
-        If SwinGame.KeyTyped(KeyCode.VK_ESCAPE) Then
-            EndCurrentState()
-            Return True
-        End If
+    /// <summary>
+    /// Handles the processing of user input when the main menu is showing
+    /// </summary>
+    public static void HandleMainMenuInput()
+    {
+        HandleMenuInput(MAIN_MENU, 0, 0);
+    }
 
-        If SwinGame.MouseClicked(MouseButton.LeftButton) Then
-            Dim i as Integer
-For i  = 0 To _menuStructure(menu).Length - 1
-                'IsMouseOver the i'th button of the menu
-                If IsMouseOverMenu(i, level, xOffset) Then
-                    PerformMenuAction(menu, i)
-                    Return True
-                End If
-            Next
+    /// <summary>
+    /// Handles the processing of user input when the main menu is showing
+    /// </summary>
+    public static void HandleSetupMenuInput()
+    {
+        bool handled;
+        handled = HandleMenuInput(SETUP_MENU, 1, 1);
 
-            If level > 0 Then
-                'none clicked - so end this sub menu
-                EndCurrentState()
-            End If
-        End If
+        if (!handled)
+            HandleMenuInput(MAIN_MENU, 0, 0);
+    }
 
-        Return False
-    End Function
+    /// <summary>
+    /// Handle input in the game menu.
+    /// </summary>
+    /// <remarks>
+    /// Player can return to the game, surrender, or quit entirely
+    /// </remarks>
+    public static void HandleGameMenuInput()
+    {
+        HandleMenuInput(GAME_MENU, 0, 0);
+    }
 
-    ''' <summary>
-    ''' Draws the main menu to the screen.
-    ''' </summary>
-    Public Sub DrawMainMenu()
-        'Clears the Screen to Black
-        'SwinGame.DrawText("Main Menu", Color.White, GameFont("ArialLarge"), 50, 50)
+    /// <summary>
+    /// Handles input for the specified menu.
+    /// </summary>
+    /// <param name="menu">the identifier of the menu being processed</param>
+    /// <param name="level">the vertical level of the menu</param>
+    /// <param name="xOffset">the xoffset of the menu</param>
+    /// <returns>false if a clicked missed the buttons. This can be used to check prior menus.</returns>
+    private static bool HandleMenuInput(int menu, int level, int xOffset)
+    {
+        if (SwinGame.KeyTyped(KeyCode.VK_ESCAPE))
+        {
+            EndCurrentState();
+            return true;
+        }
 
-        DrawButtons(MAIN_MENU)
-    End Sub
+        if (SwinGame.MouseClicked(MouseButton.LeftButton))
+        {
+            int i;
+            for (i = 0; i <= _menuStructure[menu].Length - 1; i++)
+            {
+                // IsMouseOver the i'th button of the menu
+                if (IsMouseOverMenu(i, level, xOffset))
+                {
+                    PerformMenuAction(menu, i);
+                    return true;
+                }
+            }
 
-    ''' <summary>
-    ''' Draws the Game menu to the screen
-    ''' </summary>
-    Public Sub DrawGameMenu()
-        'Clears the Screen to Black
-        'SwinGame.DrawText("Paused", Color.White, GameFont("ArialLarge"), 50, 50)
+            if (level > 0)
+                // none clicked - so end this sub menu
+                EndCurrentState();
+        }
 
-        DrawButtons(GAME_MENU)
-    End Sub
+        return false;
+    }
 
-    ''' <summary>
-    ''' Draws the settings menu to the screen.
-    ''' </summary>
-    ''' <remarks>
-    ''' Also shows the main menu
-    ''' </remarks>
-    Public Sub DrawSettings()
-        'Clears the Screen to Black
-        'SwinGame.DrawText("Settings", Color.White, GameFont("ArialLarge"), 50, 50)
+    /// <summary>
+    /// Draws the main menu to the screen.
+    /// </summary>
+    public static void DrawMainMenu()
+    {
+        // Clears the Screen to Black
+        // SwinGame.DrawText("Main Menu", Color.White, GameFont("ArialLarge"), 50, 50)
 
-        DrawButtons(MAIN_MENU)
-        DrawButtons(SETUP_MENU, 1, 1)
-    End Sub
+        DrawButtons(MAIN_MENU);
+    }
 
-    ''' <summary>
-    ''' Draw the buttons associated with a top level menu.
-    ''' </summary>
-    ''' <param name="menu">the index of the menu to draw</param>
-    Private Sub DrawButtons(ByVal menu As Integer)
-        DrawButtons(menu, 0, 0)
-    End Sub
+    /// <summary>
+    /// Draws the Game menu to the screen
+    /// </summary>
+    public static void DrawGameMenu()
+    {
+        // Clears the Screen to Black
+        // SwinGame.DrawText("Paused", Color.White, GameFont("ArialLarge"), 50, 50)
 
-    ''' <summary>
-    ''' Draws the menu at the indicated level.
-    ''' </summary>
-    ''' <param name="menu">the menu to draw</param>
-    ''' <param name="level">the level (height) of the menu</param>
-    ''' <param name="xOffset">the offset of the menu</param>
-    ''' <remarks>
-    ''' The menu text comes from the _menuStructure field. The level indicates the height
-    ''' of the menu, to enable sub menus. The xOffset repositions the menu horizontally
-    ''' to allow the submenus to be positioned correctly.
-    ''' </remarks>
-    Private Sub DrawButtons(ByVal menu As Integer, ByVal level As Integer, ByVal xOffset As Integer)
-        Dim btnTop As Integer
-		Dim toDraw as Rectangle
+        DrawButtons(GAME_MENU);
+    }
 
-        btnTop = MENU_TOP - (MENU_GAP + BUTTON_HEIGHT) * level
-        Dim i as Integer
-		For i  = 0 To _menuStructure(menu).Length - 1
-            Dim btnLeft As Integer
-			
-            btnLeft = MENU_LEFT + BUTTON_SEP * (i + xOffset)
-            'SwinGame.FillRectangle(Color.White, btnLeft, btnTop, BUTTON_WIDTH, BUTTON_HEIGHT)
-			toDraw.X = btnLeft + TEXT_OFFSET
-			toDraw.Y = btnTop + TEXT_OFFSET
-			toDraw.Width = BUTTON_WIDTH
-			toDraw.Height = BUTTON_HEIGHT
-			SwinGame.DrawTextLines(_menuStructure(menu)(i), MENU_COLOR, Color.Black, GameFont("Menu"), FontAlignment.AlignCenter, toDraw)
+    /// <summary>
+    /// Draws the settings menu to the screen.
+    /// </summary>
+    /// <remarks>
+    /// Also shows the main menu
+    /// </remarks>
+    public static void DrawSettings()
+    {
+        // Clears the Screen to Black
+        // SwinGame.DrawText("Settings", Color.White, GameFont("ArialLarge"), 50, 50)
 
-            If SwinGame.MouseDown(MouseButton.LeftButton) And IsMouseOverMenu(i, level, xOffset) Then
-                SwinGame.DrawRectangle(HIGHLIGHT_COLOR, btnLeft, btnTop, BUTTON_WIDTH, BUTTON_HEIGHT)
-            End If
-        Next
-    End Sub
+        DrawButtons(MAIN_MENU);
+        DrawButtons(SETUP_MENU, 1, 1);
+    }
 
-    ''' <summary>
-    ''' Determined if the mouse is over one of the button in the main menu.
-    ''' </summary>
-    ''' <param name="button">the index of the button to check</param>
-    ''' <returns>true if the mouse is over that button</returns>
-    Private Function IsMouseOverButton(ByVal button As Integer) As Boolean
-        Return IsMouseOverMenu(button, 0, 0)
-    End Function
+    /// <summary>
+    /// Draw the buttons associated with a top level menu.
+    /// </summary>
+    /// <param name="menu">the index of the menu to draw</param>
+    private static void DrawButtons(int menu)
+    {
+        DrawButtons(menu, 0, 0);
+    }
 
-    ''' <summary>
-    ''' Checks if the mouse is over one of the buttons in a menu.
-    ''' </summary>
-    ''' <param name="button">the index of the button to check</param>
-    ''' <param name="level">the level of the menu</param>
-    ''' <param name="xOffset">the xOffset of the menu</param>
-    ''' <returns>true if the mouse is over the button</returns>
-    Private Function IsMouseOverMenu(ByVal button As Integer, ByVal level As Integer, ByVal xOffset As Integer) As Boolean
-        Dim btnTop As Integer = MENU_TOP - (MENU_GAP + BUTTON_HEIGHT) * level
-        Dim btnLeft As Integer = MENU_LEFT + BUTTON_SEP * (button + xOffset)
+    /// <summary>
+    /// Draws the menu at the indicated level.
+    /// </summary>
+    /// <param name="menu">the menu to draw</param>
+    /// <param name="level">the level (height) of the menu</param>
+    /// <param name="xOffset">the offset of the menu</param>
+    /// <remarks>
+    /// The menu text comes from the _menuStructure field. The level indicates the height
+    /// of the menu, to enable sub menus. The xOffset repositions the menu horizontally
+    /// to allow the submenus to be positioned correctly.
+    /// </remarks>
+    private static void DrawButtons(int menu, int level, int xOffset)
+    {
+        int btnTop;
+        Rectangle toDraw;
 
-        Return IsMouseInRectangle(btnLeft, btnTop, BUTTON_WIDTH, BUTTON_HEIGHT)
-    End Function
+        btnTop = MENU_TOP - (MENU_GAP + BUTTON_HEIGHT) * level;
+        int i;
+        for (i = 0; i <= _menuStructure[menu].Length - 1; i++)
+        {
+            int btnLeft;
 
-    ''' <summary>
-    ''' A button has been clicked, perform the associated action.
-    ''' </summary>
-    ''' <param name="menu">the menu that has been clicked</param>
-    ''' <param name="button">the index of the button that was clicked</param>
-    Private Sub PerformMenuAction(ByVal menu As Integer, ByVal button As Integer)
-        Select Case menu
-            Case MAIN_MENU
-                PerformMainMenuAction(button)
-            Case SETUP_MENU
-                PerformSetupMenuAction(button)
-            Case GAME_MENU
-                PerformGameMenuAction(button)
-        End Select
-    End Sub
+            btnLeft = MENU_LEFT + BUTTON_SEP * (i + xOffset);
+            // SwinGame.FillRectangle(Color.White, btnLeft, btnTop, BUTTON_WIDTH, BUTTON_HEIGHT)
+            toDraw.X = btnLeft + TEXT_OFFSET;
+            toDraw.Y = btnTop + TEXT_OFFSET;
+            toDraw.Width = BUTTON_WIDTH;
+            toDraw.Height = BUTTON_HEIGHT;
+            SwinGame.DrawTextLines(_menuStructure[menu](i), MENU_COLOR, Color.Black, GameFont("Menu"), FontAlignment.AlignCenter, toDraw);
 
-    ''' <summary>
-    ''' The main menu was clicked, perform the button's action.
-    ''' </summary>
-    ''' <param name="button">the button pressed</param>
-    Private Sub PerformMainMenuAction(ByVal button As Integer)
-        Select Case button
-            Case MAIN_MENU_PLAY_BUTTON
-                StartGame()
-            Case MAIN_MENU_SETUP_BUTTON
-                AddNewState(GameState.AlteringSettings)
-            Case MAIN_MENU_TOP_SCORES_BUTTON
-                AddNewState(GameState.ViewingHighScores)
-            Case MAIN_MENU_QUIT_BUTTON
-                EndCurrentState()
-        End Select
-    End Sub
+            if (SwinGame.MouseDown(MouseButton.LeftButton) & IsMouseOverMenu(i, level, xOffset))
+                SwinGame.DrawRectangle(HIGHLIGHT_COLOR, btnLeft, btnTop, BUTTON_WIDTH, BUTTON_HEIGHT);
+        }
+    }
 
-    ''' <summary>
-    ''' The setup menu was clicked, perform the button's action.
-    ''' </summary>
-    ''' <param name="button">the button pressed</param>
-    Private Sub PerformSetupMenuAction(ByVal button As Integer)
-        Select Case button
-            Case SETUP_MENU_EASY_BUTTON
-                SetDifficulty(AIOption.Hard)
-            Case SETUP_MENU_MEDIUM_BUTTON
-                SetDifficulty(AIOption.Hard)
-            Case SETUP_MENU_HARD_BUTTON
-                SetDifficulty(AIOption.Hard)
-        End Select
-        'Always end state - handles exit button as well
-        EndCurrentState()
-    End Sub
+    /// <summary>
+    /// Determined if the mouse is over one of the button in the main menu.
+    /// </summary>
+    /// <param name="button">the index of the button to check</param>
+    /// <returns>true if the mouse is over that button</returns>
+    private static bool IsMouseOverButton(int button)
+    {
+        return IsMouseOverMenu(button, 0, 0);
+    }
 
-    ''' <summary>
-    ''' The game menu was clicked, perform the button's action.
-    ''' </summary>
-    ''' <param name="button">the button pressed</param>
-    Private Sub PerformGameMenuAction(ByVal button As Integer)
-        Select Case button
-            Case GAME_MENU_RETURN_BUTTON
-                EndCurrentState()
-            Case GAME_MENU_SURRENDER_BUTTON
-                EndCurrentState() 'end game menu
-                EndCurrentState() 'end game
-            Case GAME_MENU_QUIT_BUTTON
-                AddNewState(GameState.Quitting)
-        End Select
-    End Sub
-End Module
+    /// <summary>
+    /// Checks if the mouse is over one of the buttons in a menu.
+    /// </summary>
+    /// <param name="button">the index of the button to check</param>
+    /// <param name="level">the level of the menu</param>
+    /// <param name="xOffset">the xOffset of the menu</param>
+    /// <returns>true if the mouse is over the button</returns>
+    private static bool IsMouseOverMenu(int button, int level, int xOffset)
+    {
+        int btnTop = MENU_TOP - (MENU_GAP + BUTTON_HEIGHT) * level;
+        int btnLeft = MENU_LEFT + BUTTON_SEP * (button + xOffset);
+
+        return IsMouseInRectangle(btnLeft, btnTop, BUTTON_WIDTH, BUTTON_HEIGHT);
+    }
+
+    /// <summary>
+    /// A button has been clicked, perform the associated action.
+    /// </summary>
+    /// <param name="menu">the menu that has been clicked</param>
+    /// <param name="button">the index of the button that was clicked</param>
+    private static void PerformMenuAction(int menu, int button)
+    {
+        switch (menu)
+        {
+            case MAIN_MENU:
+                {
+                    PerformMainMenuAction(button);
+                    break;
+                }
+
+            case SETUP_MENU:
+                {
+                    PerformSetupMenuAction(button);
+                    break;
+                }
+
+            case GAME_MENU:
+                {
+                    PerformGameMenuAction(button);
+                    break;
+                }
+        }
+    }
+
+    /// <summary>
+    /// The main menu was clicked, perform the button's action.
+    /// </summary>
+    /// <param name="button">the button pressed</param>
+    private static void PerformMainMenuAction(int button)
+    {
+        switch (button)
+        {
+            case MAIN_MENU_PLAY_BUTTON:
+                {
+                    StartGame();
+                    break;
+                }
+
+            case MAIN_MENU_SETUP_BUTTON:
+                {
+                    AddNewState(GameState.AlteringSettings);
+                    break;
+                }
+
+            case MAIN_MENU_TOP_SCORES_BUTTON:
+                {
+                    AddNewState(GameState.ViewingHighScores);
+                    break;
+                }
+
+            case MAIN_MENU_QUIT_BUTTON:
+                {
+                    EndCurrentState();
+                    break;
+                }
+        }
+    }
+
+    /// <summary>
+    /// The setup menu was clicked, perform the button's action.
+    /// </summary>
+    /// <param name="button">the button pressed</param>
+    private static void PerformSetupMenuAction(int button)
+    {
+        switch (button)
+        {
+            case SETUP_MENU_EASY_BUTTON:
+                {
+                    SetDifficulty(AIOption.Hard);
+                    break;
+                }
+
+            case SETUP_MENU_MEDIUM_BUTTON:
+                {
+                    SetDifficulty(AIOption.Hard);
+                    break;
+                }
+
+            case SETUP_MENU_HARD_BUTTON:
+                {
+                    SetDifficulty(AIOption.Hard);
+                    break;
+                }
+        }
+        // Always end state - handles exit button as well
+        EndCurrentState();
+    }
+
+    /// <summary>
+    /// The game menu was clicked, perform the button's action.
+    /// </summary>
+    /// <param name="button">the button pressed</param>
+    private static void PerformGameMenuAction(int button)
+    {
+        switch (button)
+        {
+            case GAME_MENU_RETURN_BUTTON:
+                {
+                    EndCurrentState();
+                    break;
+                }
+
+            case GAME_MENU_SURRENDER_BUTTON:
+                {
+                    EndCurrentState(); // end game menu
+                    EndCurrentState(); // end game
+                    break;
+                }
+
+            case GAME_MENU_QUIT_BUTTON:
+                {
+                    AddNewState(GameState.Quitting);
+                    break;
+                }
+        }
+    }
+}
+
