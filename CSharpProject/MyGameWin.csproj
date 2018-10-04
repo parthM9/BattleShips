@@ -36,6 +36,7 @@
   <PropertyGroup>
     <PrepareForRunDependsOn>$(PrepareForRunDependsOn);CopyLibsToOut</PrepareForRunDependsOn>
   </PropertyGroup>
+  <ItemGroup />
   <ItemGroup>
     <Compile Include="src\DeploymentController.cs" />
     <Compile Include="src\DiscoveryController.cs" />
@@ -56,6 +57,7 @@
     <Compile Include="src\Model\ISeaGrid.cs" />
     <Compile Include="src\Model\Player.cs" />
     <Compile Include="src\Model\ResultOfAttack.cs" />
+    <Compile Include="src\Model\SeaGrid.cs" />
     <Compile Include="src\Model\SeaGridAdapter.cs" />
     <Compile Include="src\Model\Ship.cs" />
     <Compile Include="src\Model\ShipName.cs" />
@@ -75,9 +77,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <WinLibs Include="lib\win32\*.dll" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="src\Model\SeaGrid.vb" />
   </ItemGroup>
   <Target Name="CopyLibsToOut">
     <Copy SourceFiles="@(WinLibs)" DestinationFolder="$(OutDir)" />
