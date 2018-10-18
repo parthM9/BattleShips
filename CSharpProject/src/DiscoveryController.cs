@@ -13,21 +13,33 @@ using SwinGameSDK;
 static class DiscoveryController
 {
 
-	/// <summary>
-	/// Handles input during the discovery phase of the game.
-	/// </summary>
-	/// <remarks>
-	/// Escape opens the game menu. Clicking the mouse will
-	/// attack a location.
-	/// </remarks>
-	public static void HandleDiscoveryInput()
+    /// <summary>
+    /// Handles input during the discovery phase of the game.
+    /// </summary>
+    /// <remarks>
+    /// Escape opens the game menu. Clicking the mouse will
+    /// attack a location.
+    /// </remarks>
+
+
+    private const int BACK_BUTTON_LEFT = 693;
+    private const int TOP_BUTTONS_TOP = 72;
+    private const int TOP_BUTTONS_HEIGHT = 46;
+    private const int BACK_BUTTON_WIDTH = 80;
+
+    public static void HandleDiscoveryInput()
 	{
 		if (SwinGame.KeyTyped(KeyCode.EscapeKey)) {
 			GameController.AddNewState(GameState.ViewingGameMenu);
 		}
 
 		if (SwinGame.MouseClicked(MouseButton.LeftButton)) {
-			DoAttack();
+            if (UtilityFunctions.IsMouseInRectangle(BACK_BUTTON_LEFT, TOP_BUTTONS_TOP, BACK_BUTTON_WIDTH, TOP_BUTTONS_HEIGHT))
+            {
+                GameController.AddNewState(GameState.ViewingGameMenu);
+            }
+            else { DoAttack(); }
+                
 		}
 	}
 
@@ -68,8 +80,13 @@ static class DiscoveryController
 		} else {
 			UtilityFunctions.DrawField(GameController.HumanPlayer.EnemyGrid, GameController.ComputerPlayer, false);
 		}
+        
+        SwinGame.DrawBitmap(GameResources.GameImage("Back"), BACK_BUTTON_LEFT, TOP_BUTTONS_TOP);
+        //SwinGame.FillRectangle(Color.LightBlue, BACK_BUTTON_LEFT, BACK_BUTTON_TOP, BACK_BUTTON_WIDTH, BACK_BUTTON_HEIGHT)
+        //SwinGame.DrawText("BACK", Color.Black, GameFont("Courier"), BACK_BUTTON_LEFT + TEXT_OFFSET, BACK_BUTTON_TOP)
+        
 
-		UtilityFunctions.DrawSmallField(GameController.HumanPlayer.PlayerGrid, GameController.HumanPlayer);
+        UtilityFunctions.DrawSmallField(GameController.HumanPlayer.PlayerGrid, GameController.HumanPlayer);
 		UtilityFunctions.DrawMessage();
 
 		SwinGame.DrawText(GameController.HumanPlayer.Shots.ToString(), Color.White, GameResources.GameFont("Menu"), SCORES_LEFT, SHOTS_TOP);
