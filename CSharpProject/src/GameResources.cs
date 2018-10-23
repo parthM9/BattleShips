@@ -173,8 +173,8 @@ public static class GameResources
 
 		_LoaderFull = SwinGame.LoadBitmap(SwinGame.PathToResource("loader_full.png", ResourceKind.BitmapResource));
 		_LoaderEmpty = SwinGame.LoadBitmap(SwinGame.PathToResource("loader_empty.png", ResourceKind.BitmapResource));
-
-		PlaySwinGameIntro();
+        //EndLoadingScreen(0, 0);
+        PlaySwinGameIntro();
 	}
 
 	private static void PlaySwinGameIntro()
