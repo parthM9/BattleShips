@@ -33,6 +33,8 @@ public static class GameResources
 		NewImage("PlayButton", "deploy_play_button.png");
 		NewImage("RandomButton", "deploy_randomize_button.png");
         NewImage("Back", "backbutton.jpg");
+        NewImage("MuteOn", "MuteON.png");
+        NewImage("MuteOff", "MuteOFF.png");
 
         //Ships
         int i = 0;

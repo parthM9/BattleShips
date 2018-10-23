@@ -300,9 +300,11 @@ static class MenuController
                 break;
             case MAIN_MENU_MUTE:
                 SwinGame.StopMusic();
+                SwinGame.DrawBitmap(GameImage("MuteOn"), 600, 550);
                 break;
             case MAIN_MENU_UNMUTE:
                 SwinGame.PlayMusic(GameMusic("Background"));
+                SwinGame.DrawBitmap(GameImage("MuteOff"), 600, 550);
                 break;
         }
     }
