@@ -33,6 +33,8 @@ public static class GameResources
 		NewImage("PlayButton", "deploy_play_button.png");
 		NewImage("RandomButton", "deploy_randomize_button.png");
         NewImage("Back", "backbutton.jpg");
+        NewImage("MuteOn", "MuteON.png");
+        NewImage("MuteOff", "MuteOFF.png");
 
         //Ships
         int i = 0;
@@ -173,8 +175,8 @@ public static class GameResources
 
 		_LoaderFull = SwinGame.LoadBitmap(SwinGame.PathToResource("loader_full.png", ResourceKind.BitmapResource));
 		_LoaderEmpty = SwinGame.LoadBitmap(SwinGame.PathToResource("loader_empty.png", ResourceKind.BitmapResource));
-
-		PlaySwinGameIntro();
+        //EndLoadingScreen(0, 0);
+        PlaySwinGameIntro();
 	}
 
 	private static void PlaySwinGameIntro()
